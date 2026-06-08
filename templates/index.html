@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Security Filter - SVM</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="chat-header">
+        <h2>
+          AI Security Filter <span class="badge">SVM Intent Detection</span>
+        </h2>
+      </header>
+
+      <main class="chat-container">
+        <div class="message system-message">
+          <div class="avatar">✨</div>
+          <div class="message-content">
+            <p>
+              Halo! Saya adalah sistem filter keamanan AI berbasis
+              <em>Support Vector Machine</em>. Masukkan prompt teks untuk
+              menganalisis intensi semantiknya.
+            </p>
+          </div>
+        </div>
+
+        {% if result %}
+        <div class="message user-message">
+          <div class="message-content">
+            <p>{{ original }}</p>
+          </div>
+        </div>
+
+        <div class="message system-message">
+          <div class="avatar">🤖</div>
+          <div class="message-content">
+            <div class="result-box {{ status_class }}">
+              <i
+                class="fas {% if status_class == 'safe' %}fa-check-circle{% else %}fa-shield-alt{% endif %}"
+              ></i>
+              {{ result }}
+            </div>
+
+            <div class="details">
+              <strong>Log Deteksi:</strong><br />
+              <span class="log-item"
+                ><em>Terjemahan (ID):</em> {{ translated }}</span
+              >
+            </div>
+          </div>
+        </div>
+        {% endif %} {% if error %}
+        <div class="message system-message">
+          <div class="avatar">⚠️</div>
+          <div class="message-content">
+            <div class="result-box blocked">{{ error }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </main>
+
+      <footer class="input-area">
+        <form method="POST" action="/" class="input-form">
+          <textarea
+            name="prompt"
+            placeholder="Ketik prompt di sini..."
+            rows="1"
+            required
+            oninput="
+              this.style.height = '';
+              this.style.height = this.scrollHeight + 'px';
+            "
+          ></textarea>
+          <button type="submit" class="send-btn" title="Analisis Prompt">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+        <div class="footer-note">Sistem memproses deteksi intensi semantik</div>
+      </footer>
+    </div>
+  </body>
+</html>

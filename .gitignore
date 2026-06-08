@@ -1,0 +1,10 @@
+# Mengabaikan virtual environment
+venv/
+env/
+
+# Mengabaikan file cache Python
+__pycache__/
+*.pyc
+
+# (Opsional) Jika file model Anda ukurannya di atas 100MB, hilangkan tanda pagar di bawah ini
+# models/*.pkl
