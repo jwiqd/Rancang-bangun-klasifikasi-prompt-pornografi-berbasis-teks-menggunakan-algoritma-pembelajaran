@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="id">
   <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Security Filter - SVM</title>
@@ -12,6 +13,76 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
+
+    <style>
+      .lime-modern-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-top: 20px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .lime-col {
+        flex: 1;
+        min-width: 250px;
+        display: flex;
+        flex-direction: column;
+      }
+      .lime-title {
+        font-size: 0.9em;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 8px;
+        text-align: center;
+      }
+      /* Kolom Probabilitas */
+      .prob-box {
+        margin-bottom: 15px;
+      }
+      .prob-label {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        margin-bottom: 5px;
+        font-size: 0.95em;
+      }
+      .prob-bar-bg {
+        width: 100%;
+        height: 12px;
+        background: #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .prob-bar-fill {
+        height: 100%;
+        border-radius: 6px;
+      }
+      /* Kolom Teks Tersorot */
+      .text-highlight-box {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        line-height: 1.8;
+        font-size: 1.05em;
+      }
+      .word-pill {
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin: 0 2px;
+        display: inline-block;
+      }
+    </style>
   </head>
   <body>
     <div class="app-container">
@@ -35,14 +106,12 @@
 
         {% if result %}
         <div class="message user-message">
-          <div class="message-content">
-            <p>{{ original }}</p>
-          </div>
+          <div class="message-content"><p>{{ original }}</p></div>
         </div>
 
         <div class="message system-message">
           <div class="avatar">🤖</div>
-          <div class="message-content">
+          <div class="message-content" style="max-width: 100%; width: 100%">
             <div class="result-box {{ status_class }}">
               <i
                 class="fas {% if status_class == 'safe' %}fa-check-circle{% else %}fa-shield-alt{% endif %}"
@@ -50,15 +119,278 @@
               {{ result }}
             </div>
 
-            <div class="details">
-              <strong>Log Deteksi:</strong><br />
-              <span class="log-item"
+            <div
+              class="details"
+              style="
+                margin-top: 15px;
+                background: #f8fafc;
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <strong>Log Deteksi Semantik:</strong><br />
+              <span class="log-item" style="color: #475569"
                 ><em>Terjemahan (ID):</em> {{ translated }}</span
               >
             </div>
+
+            {% if lime_custom %}
+            <div class="lime-modern-container">
+              <div class="lime-col">
+                <div class="lime-title">Prediksi Kelas</div>
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    height: 100%;
+                    padding: 0 15px;
+                  "
+                >
+                  <div class="prob-box">
+                    <div class="prob-label">
+                      <span style="color: #3b82f6">Aman</span>
+                      <span>{{ lime_custom.prob_aman }}%</span>
+                    </div>
+                    <div class="prob-bar-bg">
+                      <div
+                        class="prob-bar-fill"
+                        style="width: {{ lime_custom.prob_aman }}%; background: #3b82f6;"
+                      ></div>
+                    </div>
+                  </div>
+                  <div class="prob-box">
+                    <div class="prob-label">
+                      <span style="color: #ef4444">Blokir</span>
+                      <span>{{ lime_custom.prob_blokir }}%</span>
+                    </div>
+                    <div class="prob-bar-bg">
+                      <div
+                        class="prob-bar-fill"
+                        style="width: {{ lime_custom.prob_blokir }}%; background: #ef4444;"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lime-col" style="flex: 1.5">
+                <div class="lime-title">Bobot Kata</div>
+                <div style="position: relative; width: 100%; height: 200px">
+                  <canvas id="limeModernChart"></canvas>
+                </div>
+              </div>
+
+              <div class="lime-col">
+                <div class="lime-title">Teks Dianalisis</div>
+                <div class="text-highlight-box" id="highlightedText"></div>
+              </div>
+
+              <script type="application/json" id="limeCustomData">
+                {{ lime_custom | tojson | safe }}
+              </script>
+            </div>
+            {% endif %}
           </div>
         </div>
-        {% endif %} {% if error %}
+
+        {% if metrics %}
+        <div class="message system-message">
+          <div class="avatar">📊</div>
+          <div
+            class="message-content"
+            style="width: 100%; max-width: 500px; padding-bottom: 5px"
+          >
+            <h4
+              style="
+                margin-top: 0;
+                margin-bottom: 15px;
+                color: #333;
+                text-align: center;
+              "
+            >
+              Performa Deteksi Model SVM
+            </h4>
+            <div style="position: relative; width: 100%; height: 220px">
+              <canvas id="metricsChart"></canvas>
+            </div>
+            <p
+              style="
+                text-align: center;
+                margin-top: 15px;
+                margin-bottom: 0;
+                font-size: 0.85em;
+                color: #666;
+              "
+            >
+              Total Data Uji (Support):
+              <strong>{{ metrics.support | int }} baris</strong>
+            </p>
+          </div>
+        </div>
+
+        <script type="application/json" id="metricsDataJson">
+          {{ metrics | tojson | safe }}
+        </script>
+        {% endif %} {% endif %}
+
+        <script>
+          document.addEventListener("DOMContentLoaded", function () {
+            // 1. RENDER METRIK SVM
+            const metricsContainer = document.getElementById("metricsDataJson");
+            if (metricsContainer) {
+              try {
+                const metricsData = JSON.parse(metricsContainer.textContent);
+                if (metricsData) {
+                  const ctxMetrics = document
+                    .getElementById("metricsChart")
+                    .getContext("2d");
+                  const acc = (metricsData.accuracy * 100).toFixed(1);
+                  const prec = (metricsData.precision * 100).toFixed(1);
+                  const rec = (metricsData.recall * 100).toFixed(1);
+                  const f1 = (metricsData.f1_score * 100).toFixed(1);
+
+                  new Chart(ctxMetrics, {
+                    type: "bar",
+                    data: {
+                      labels: ["Akurasi", "Precision", "Recall", "F1-Score"],
+                      datasets: [
+                        {
+                          label: "Skor (%)",
+                          data: [acc, prec, rec, f1],
+                          backgroundColor: [
+                            "rgba(54, 162, 235, 0.6)",
+                            "rgba(75, 192, 192, 0.6)",
+                            "rgba(255, 159, 64, 0.6)",
+                            "rgba(153, 102, 255, 0.6)",
+                          ],
+                          borderColor: [
+                            "rgb(54, 162, 235)",
+                            "rgb(75, 192, 192)",
+                            "rgb(255, 159, 64)",
+                            "rgb(153, 102, 255)",
+                          ],
+                          borderWidth: 1,
+                          borderRadius: 4,
+                        },
+                      ],
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: { y: { beginAtZero: true, max: 100 } },
+                      plugins: { legend: { display: false } },
+                    },
+                  });
+                }
+              } catch (e) {
+                console.error("Error merender Metrik:", e);
+              }
+            }
+
+            // 2. RENDER LIME MODERN (CHART & TEKS HIGHLIGHT)
+            const limeContainer = document.getElementById("limeCustomData");
+            if (limeContainer) {
+              try {
+                const limeData = JSON.parse(limeContainer.textContent);
+                if (limeData) {
+                  // A. Render Grafik Batang Horizontal
+                  const weights = limeData.weights;
+                  if (weights && weights.length > 0) {
+                    const ctxLime = document
+                      .getElementById("limeModernChart")
+                      .getContext("2d");
+                    const labels = weights.map((item) => item[0]);
+                    const dataValues = weights.map((item) => item[1]);
+                    // Merah untuk Blokir (>0), Biru untuk Aman (<0)
+                    const bgColors = dataValues.map((val) =>
+                      val > 0
+                        ? "rgba(239, 68, 68, 0.8)"
+                        : "rgba(59, 130, 246, 0.8)",
+                    );
+
+                    new Chart(ctxLime, {
+                      type: "bar",
+                      data: {
+                        labels: labels,
+                        datasets: [
+                          {
+                            data: dataValues,
+                            backgroundColor: bgColors,
+                            borderRadius: 4,
+                          },
+                        ],
+                      },
+                      options: {
+                        indexAxis: "y",
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          x: {
+                            grid: {
+                              color: (ctx) =>
+                                ctx.tick.value === 0
+                                  ? "rgba(0,0,0,0.3)"
+                                  : "rgba(0,0,0,0.05)",
+                              lineWidth: (ctx) =>
+                                ctx.tick.value === 0 ? 2 : 1,
+                            },
+                          },
+                        },
+                        plugins: { legend: { display: false } },
+                      },
+                    });
+                  }
+
+                  // B. Render Teks Highlight (Stabilo)
+                  const textArray = limeData.text;
+                  const textDiv = document.getElementById("highlightedText");
+
+                  // Buat pemetaan (dictionary) bobot kata agar cepat dicari
+                  const weightMap = {};
+                  weights.forEach((item) => {
+                    weightMap[item[0].toLowerCase()] = item[1];
+                  });
+
+                  let htmlText = "";
+                  textArray.forEach((word) => {
+                    const cleanWord = word
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]/g, "");
+                    const weight = weightMap[cleanWord];
+
+                    if (weight !== undefined) {
+                      // Tentukan transparansi warna berdasarkan besaran bobot (max 1.0)
+                      const intensity = Math.min(Math.abs(weight) * 2, 1);
+                      let bgColor = "";
+                      let textColor = "#000";
+
+                      if (weight > 0) {
+                        // Merah (Blokir)
+                        bgColor = `rgba(239, 68, 68, ${intensity})`;
+                        if (intensity > 0.5) textColor = "#fff";
+                      } else {
+                        // Biru (Aman)
+                        bgColor = `rgba(59, 130, 246, ${intensity})`;
+                        if (intensity > 0.5) textColor = "#fff";
+                      }
+                      htmlText += `<span class="word-pill" style="background-color: ${bgColor}; color: ${textColor};" title="Bobot: ${weight.toFixed(4)}">${word}</span> `;
+                    } else {
+                      // Kata biasa tanpa bobot
+                      htmlText += `<span>${word}</span> `;
+                    }
+                  });
+                  textDiv.innerHTML = htmlText;
+                }
+              } catch (e) {
+                console.error("Error merender LIME Modern:", e);
+              }
+            }
+          });
+        </script>
+
+        {% if error %}
         <div class="message system-message">
           <div class="avatar">⚠️</div>
           <div class="message-content">

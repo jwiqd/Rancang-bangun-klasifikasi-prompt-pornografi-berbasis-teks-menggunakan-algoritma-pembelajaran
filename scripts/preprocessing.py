@@ -23,13 +23,19 @@ def clean_text(text):
     text = re.sub(r'[^a-z\s]', '', text)
 
     # ==========================================
-    # 4. NORMALISASI SINONIM / EUFEMISME (WAJIB DI SINI)
-    # Dilakukan sebelum Sastrawi membuang kata "tanpa"
+    # 4. NORMALISASI SINONIM / EUFEMISME DENGAN REGEX
     # ==========================================
-    text = text.replace('tanpa busana', 'telanjang')
-    text = text.replace('tidak pakai baju', 'telanjang')
-    text = text.replace('tidak berbusana', 'telanjang')
-    text = text.replace('berhubungan badan', 'seks')
+    # Jaring 1: Menangkap kombinasi kata "tanpa baju", "tidak pakai busana", "buka pakaian", dll
+    # \b = batas kata, \s+ = spasi satu atau lebih
+    pola_tanpa_baju = r'\b(tanpa|tidak pakai|gak pakai|nggak pakai|buka|lepas)\s+(baju|pakaian|busana|celana|baju dalam|pakaian dalam)\b'
+    text = re.sub(pola_tanpa_baju, 'telanjang', text)
+
+    # Jaring 2: Menangkap eufemisme hubungan seksual
+    pola_seks = r'\b(berhubungan badan|berhubungan intim|main serong|tidur bareng)\b'
+    text = re.sub(pola_seks, 'seks', text)
+
+    # Kata tunggal yang langsung diubah
+    text = text.replace('bugil', 'telanjang')
     
     # 5. Stopword Manual: Buang kata pengantar yang mengganggu skor SVM
     kata_umum = ['buatkan', 'tolong', 'saya', 'aku', 'gambarkan', 'generate', 'untuk', 'bikinkan']
