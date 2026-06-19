@@ -21,8 +21,15 @@ df = pd.read_csv(DATASET_PATH)
 X = df['text'].astype(str)
 y = df['label']
 
-# Ubah label teks menjadi angka: 1 untuk negatif (Blokir), 0 untuk positif (Aman)
-y = y.map({'negatif': 1, 'positif': 0})
+# # Ubah label teks menjadi angka: 1 untuk negatif (Blokir), 0 untuk positif (Aman)
+# y = y.map({'negatif': 1, 'positif': 0})
+# --- KODE YANG DIPERBAIKI ---
+# Gunakan replace agar data yang sudah berupa angka 0/1 tidak diubah menjadi NaN
+y = y.replace({'negatif': 1, 'positif': 0, '1': 1, '0': 0})
+
+# Paksa semua label menjadi angka bulat (integer) agar aman dibaca oleh SVM
+y = pd.to_numeric(y, errors='coerce').fillna(0).astype(int)
+# ----------------------------
 
 # 2. Split Data (80% Training, 20% Testing)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)

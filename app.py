@@ -54,11 +54,11 @@ def index():
         prob_aman = probabilities[0]
         prob_blokir = probabilities[1]
         
-        if prediction == 1:
+        if prob_blokir > prob_aman: # Jika skor Blokir lebih dari Aman
             confidence_score = round(prob_blokir * 100, 1)
             result_msg = "KONTEN DIBLOKIR: Terdeteksi unsur pornografi/narasi vulgar"
             status_class = "blocked"
-        else:
+        else: # Jika skor Aman lebih tinggi atau seri (50/50)
             confidence_score = round(prob_aman * 100, 1)
             result_msg = "PROMPT AMAN"
             status_class = "safe"
