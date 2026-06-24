@@ -2,9 +2,10 @@
 <html lang="id">
   <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Security Filter - SVM</title>
+    <title>AI Security Filter - SVM vs DT</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}"
@@ -13,7 +14,6 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
-
     <style>
       .lime-modern-container {
         display: flex;
@@ -24,7 +24,7 @@
         border-radius: 12px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        margin-top: 20px;
+        margin-top: 15px;
         width: 100%;
         box-sizing: border-box;
       }
@@ -45,7 +45,6 @@
         padding-bottom: 8px;
         text-align: center;
       }
-      /* Kolom Probabilitas */
       .prob-box {
         margin-bottom: 15px;
       }
@@ -67,7 +66,6 @@
         height: 100%;
         border-radius: 6px;
       }
-      /* Kolom Teks Tersorot */
       .text-highlight-box {
         background: #f8fafc;
         padding: 15px;
@@ -82,14 +80,36 @@
         margin: 0 2px;
         display: inline-block;
       }
+      .chart-scroll-wrapper::-webkit-scrollbar {
+        height: 8px;
+      }
+      .chart-scroll-wrapper::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+      }
+      .chart-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      .chart-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      .model-badge {
+        background: #3b82f6;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.75em;
+        font-weight: bold;
+        vertical-align: middle;
+        margin-left: 8px;
+      }
     </style>
   </head>
   <body>
     <div class="app-container">
       <header class="chat-header">
-        <h2>
-          AI Security Filter <span class="badge">SVM Intent Detection</span>
-        </h2>
+        <h2>AI Security Filter <span class="badge">Model Comparison</span></h2>
       </header>
 
       <main class="chat-container">
@@ -97,26 +117,27 @@
           <div class="avatar">✨</div>
           <div class="message-content">
             <p>
-              Halo! Saya adalah sistem filter keamanan AI berbasis
-              <em>Support Vector Machine</em>. Masukkan prompt teks untuk
-              menganalisis intensi semantiknya.
+              Halo! Saya adalah sistem filter keamanan AI. Anda sekarang dapat
+              memilih antara model <strong>SVM</strong> atau
+              <strong>Decision Tree</strong> pada menu di bawah sebelum mengirim
+              prompt.
             </p>
           </div>
         </div>
 
-        {% if result %}
+        {% for chat in chat_history %}
         <div class="message user-message">
-          <div class="message-content"><p>{{ original }}</p></div>
+          <div class="message-content"><p>{{ chat.original }}</p></div>
         </div>
 
-        <div class="message system-message">
+        <div class="message system-message lime-wrapper-item">
           <div class="avatar">🤖</div>
           <div class="message-content" style="max-width: 100%; width: 100%">
-            <div class="result-box {{ status_class }}">
+            <div class="result-box {{ chat.status_class }}">
               <i
-                class="fas {% if status_class == 'safe' %}fa-check-circle{% else %}fa-shield-alt{% endif %}"
+                class="fas {% if chat.status_class == 'safe' %}fa-check-circle{% else %}fa-shield-alt{% endif %}"
               ></i>
-              {{ result }}
+              {{ chat.result }}
             </div>
 
             <div
@@ -129,13 +150,37 @@
                 border: 1px solid #e2e8f0;
               "
             >
+              <div
+                style="
+                  margin-bottom: 8px;
+                  border-bottom: 1px dashed #cbd5e1;
+                  padding-bottom: 8px;
+                "
+              >
+                <span
+                  style="
+                    font-weight: 600;
+                    font-size: 0.85em;
+                    color: #475569;
+                    text-transform: uppercase;
+                  "
+                >
+                  Model Engine:
+                  <span
+                    class="model-badge"
+                    style="background: {% if chat.model_name == 'SVM' %}#3b82f6{% else %}#10b981{% endif %}"
+                    >{{ chat.model_name }}</span
+                  >
+                </span>
+              </div>
+
               <strong>Log Deteksi Semantik:</strong><br />
               <span class="log-item" style="color: #475569"
-                ><em>Terjemahan (ID):</em> {{ translated }}</span
+                ><em>Terjemahan (ID):</em> {{ chat.translated }}</span
               >
             </div>
 
-            {% if lime_custom %}
+            {% if chat.lime_custom %}
             <div class="lime-modern-container">
               <div class="lime-col">
                 <div class="lime-title">Prediksi Kelas</div>
@@ -150,57 +195,55 @@
                 >
                   <div class="prob-box">
                     <div class="prob-label">
-                      <span style="color: #3b82f6">Aman</span>
-                      <span>{{ lime_custom.prob_aman }}%</span>
+                      <span style="color: #3b82f6">Aman</span
+                      ><span>{{ chat.lime_custom.prob_aman }}%</span>
                     </div>
                     <div class="prob-bar-bg">
                       <div
                         class="prob-bar-fill"
-                        style="width: {{ lime_custom.prob_aman }}%; background: #3b82f6;"
+                        style="width: {{ chat.lime_custom.prob_aman }}%; background: #3b82f6;"
                       ></div>
                     </div>
                   </div>
                   <div class="prob-box">
                     <div class="prob-label">
-                      <span style="color: #ef4444">Blokir</span>
-                      <span>{{ lime_custom.prob_blokir }}%</span>
+                      <span style="color: #ef4444">Blokir</span
+                      ><span>{{ chat.lime_custom.prob_blokir }}%</span>
                     </div>
                     <div class="prob-bar-bg">
                       <div
                         class="prob-bar-fill"
-                        style="width: {{ lime_custom.prob_blokir }}%; background: #ef4444;"
+                        style="width: {{ chat.lime_custom.prob_blokir }}%; background: #ef4444;"
                       ></div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div class="lime-col" style="flex: 1.5">
-                <div class="lime-title">Bobot Kata</div>
-                <div style="position: relative; width: 100%; height: 200px">
-                  <canvas id="limeModernChart"></canvas>
-                </div>
-              </div>
-
-              <div class="lime-col">
+              <div class="lime-col" style="flex: 2">
                 <div class="lime-title">Teks Dianalisis</div>
-                <div class="text-highlight-box" id="highlightedText"></div>
-              </div>
 
-              <script type="application/json" id="limeCustomData">
-                {{ lime_custom | tojson | safe }}
-              </script>
+                {% if chat.threshold_msg %}
+                <div
+                  style="margin-bottom: 12px; padding: 8px 12px; border-radius: 6px; font-size: 0.9em; font-weight: 600; background-color: {% if chat.status_class == 'safe' %}#dcfce7{% else %}#fee2e2{% endif %}; color: {% if chat.status_class == 'safe' %}#166534{% else %}#991b1b{% endif %}; border: 1px solid {% if chat.status_class == 'safe' %}#bbf7d0{% else %}#fecaca{% endif %};"
+                >
+                  {{ chat.threshold_msg }}
+                </div>
+                {% endif %}
+
+                <div class="text-highlight-box dynamic-highlight-text"></div>
+              </div>
             </div>
             {% endif %}
           </div>
         </div>
 
-        {% if metrics %}
+        {% if chat.lime_custom %}
         <div class="message system-message">
           <div class="avatar">📊</div>
           <div
             class="message-content"
-            style="width: 100%; max-width: 500px; padding-bottom: 5px"
+            style="width: 100%; max-width: 600px; padding-bottom: 5px"
           >
             <h4
               style="
@@ -210,218 +253,66 @@
                 text-align: center;
               "
             >
-              Performa Deteksi Model SVM
+              Akurasi Per Kata
             </h4>
-            <div style="position: relative; width: 100%; height: 220px">
-              <canvas id="metricsChart"></canvas>
-            </div>
-            <p
-              style="
-                text-align: center;
-                margin-top: 15px;
-                margin-bottom: 0;
-                font-size: 0.85em;
-                color: #666;
-              "
+
+            <div
+              class="chart-scroll-wrapper"
+              style="width: 100%; overflow-x: auto; padding-bottom: 10px"
             >
-              Total Data Uji (Support):
-              <strong>{{ metrics.support | int }} baris</strong>
-            </p>
+              <div
+                class="chart-inner-container"
+                style="position: relative; height: 260px; min-width: 100%"
+              >
+                <canvas class="lime-canvas-dynamic"></canvas>
+              </div>
+            </div>
+
+            <script type="application/json" class="lime-json-data">
+              {{ chat.lime_custom | tojson | safe }}
+            </script>
           </div>
         </div>
-
-        <script type="application/json" id="metricsDataJson">
-          {{ metrics | tojson | safe }}
-        </script>
-        {% endif %} {% endif %}
-
-        <script>
-          document.addEventListener("DOMContentLoaded", function () {
-            // 1. RENDER METRIK SVM
-            const metricsContainer = document.getElementById("metricsDataJson");
-            if (metricsContainer) {
-              try {
-                const metricsData = JSON.parse(metricsContainer.textContent);
-                if (metricsData) {
-                  const ctxMetrics = document
-                    .getElementById("metricsChart")
-                    .getContext("2d");
-                  const acc = (metricsData.accuracy * 100).toFixed(1);
-                  const prec = (metricsData.precision * 100).toFixed(1);
-                  const rec = (metricsData.recall * 100).toFixed(1);
-                  const f1 = (metricsData.f1_score * 100).toFixed(1);
-
-                  new Chart(ctxMetrics, {
-                    type: "bar",
-                    data: {
-                      labels: ["Akurasi", "Precision", "Recall", "F1-Score"],
-                      datasets: [
-                        {
-                          label: "Skor (%)",
-                          data: [acc, prec, rec, f1],
-                          backgroundColor: [
-                            "rgba(54, 162, 235, 0.6)",
-                            "rgba(75, 192, 192, 0.6)",
-                            "rgba(255, 159, 64, 0.6)",
-                            "rgba(153, 102, 255, 0.6)",
-                          ],
-                          borderColor: [
-                            "rgb(54, 162, 235)",
-                            "rgb(75, 192, 192)",
-                            "rgb(255, 159, 64)",
-                            "rgb(153, 102, 255)",
-                          ],
-                          borderWidth: 1,
-                          borderRadius: 4,
-                        },
-                      ],
-                    },
-                    options: {
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: { y: { beginAtZero: true, max: 100 } },
-                      plugins: { legend: { display: false } },
-                    },
-                  });
-                }
-              } catch (e) {
-                console.error("Error merender Metrik:", e);
-              }
-            }
-
-            // 2. RENDER LIME MODERN (CHART & TEKS HIGHLIGHT)
-            const limeContainer = document.getElementById("limeCustomData");
-            if (limeContainer) {
-              try {
-                const limeData = JSON.parse(limeContainer.textContent);
-                if (limeData) {
-                  // A. Render Grafik Batang Horizontal
-                  const weights = limeData.weights;
-                  if (weights && weights.length > 0) {
-                    const ctxLime = document
-                      .getElementById("limeModernChart")
-                      .getContext("2d");
-                    const labels = weights.map((item) => item[0]);
-
-                    // --- LOGIKA VISUAL DOSEN-PROOF ---
-                    // Jika bobotnya 0 (tidak dikenal), kita paksa jadi -0.15 (Biru) 
-                    // agar batangnya tetap muncul dan membuktikan ke dosen bahwa itu Aman.
-                    const dataValues = weights.map((item) => {
-                        let val = item[1];
-                        if (Math.abs(val) < 0.001) {
-                            return -0.15; 
-                        }
-                        return val;
-                    });
-
-                    // Penentuan warna: Merah jika > 0.001, sisanya Biru
-                    const bgColors = dataValues.map((v) =>
-                      v > 0.001 ? "#ef4444" : "#3b82f6",
-                    );
-                    // ----------------------------------
-
-                    new Chart(ctxLime, {
-                      type: "bar",
-                      data: {
-                        labels: labels,
-                        datasets: [
-                          {
-                            data: dataValues,
-                            backgroundColor: bgColors,
-                            borderRadius: 4,
-                            maxBarThickness: 30,
-                          },
-                        ],
-                      },
-                      options: {
-                        indexAxis: "y",
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                          x: {
-                            // --- KUNCI SKALA GRAFIK BIAR RAPI ---
-                            min: -1, // Mentok kiri
-                            max: 1,  // Mentok kanan
-                            ticks: {
-                                callback: function(value) {
-                                    // Tampilkan angka genap yang rapi
-                                    return value.toFixed(1);
-                                }
-                            },
-                            grid: {
-                              color: (ctx) =>
-                                ctx.tick.value === 0
-                                  ? "rgba(0,0,0,0.3)"
-                                  : "rgba(0,0,0,0.05)",
-                              lineWidth: (ctx) =>
-                                ctx.tick.value === 0 ? 2 : 1,
-                            },
-                          },
-                        },
-                        plugins: { legend: { display: false } },
-                      },
-                    });
-                  }
-
-                  // B. Render Teks Highlight (Stabilo)
-                  const textArray = limeData.text;
-                  const textDiv = document.getElementById("highlightedText");
-
-                  // Buat pemetaan (dictionary) bobot kata agar cepat dicari
-                  const weightMap = {};
-                  weights.forEach((item) => {
-                    weightMap[item[0].toLowerCase()] = item[1];
-                  });
-
-                  let htmlText = "";
-                  textArray.forEach((word) => {
-                    const cleanWord = word
-                      .toLowerCase()
-                      .replace(/[^a-z0-9]/g, "");
-                    const weight = weightMap[cleanWord];
-
-                    if (weight !== undefined) {
-                      // Tentukan transparansi warna berdasarkan besaran bobot (max 1.0)
-                      const intensity = Math.min(Math.abs(weight) * 2, 1);
-                      let bgColor = "";
-                      let textColor = "#000";
-
-                      if (weight > 0) {
-                        // Merah (Blokir)
-                        bgColor = `rgba(239, 68, 68, ${intensity})`;
-                        if (intensity > 0.5) textColor = "#fff";
-                      } else {
-                        // Biru (Aman)
-                        bgColor = `rgba(59, 130, 246, ${intensity})`;
-                        if (intensity > 0.5) textColor = "#fff";
-                      }
-                      htmlText += `<span class="word-pill" style="background-color: ${bgColor}; color: ${textColor};" title="Bobot: ${weight.toFixed(4)}">${word}</span> `;
-                    } else {
-                      // Kata biasa tanpa bobot
-                      htmlText += `<span>${word}</span> `;
-                    }
-                  });
-                  textDiv.innerHTML = htmlText;
-                }
-              } catch (e) {
-                console.error("Error merender LIME Modern:", e);
-              }
-            }
-          });
-        </script>
-
-        {% if error %}
-        <div class="message system-message">
-          <div class="avatar">⚠️</div>
-          <div class="message-content">
-            <div class="result-box blocked">{{ error }}</div>
-          </div>
-        </div>
-        {% endif %}
+        {% endif %} {% endfor %}
       </main>
 
       <footer class="input-area">
-        <form method="POST" action="/" class="input-form">
+        <form
+          method="POST"
+          action="/"
+          class="input-form"
+          style="display: flex; gap: 10px; align-items: flex-end"
+        >
+          <div style="display: flex; flex-direction: column">
+            <label
+              style="
+                font-size: 0.75em;
+                color: #64748b;
+                font-weight: bold;
+                margin-bottom: 4px;
+                padding-left: 2px;
+              "
+              >Model:</label
+            >
+            <select
+              name="model_type"
+              style="
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                background: #f8fafc;
+                font-weight: bold;
+                color: #3b82f6;
+                outline: none;
+                cursor: pointer;
+                height: 46px;
+              "
+            >
+              <option value="svm">SVM</option>
+              <option value="dt">Decision Tree</option>
+            </select>
+          </div>
+
           <textarea
             name="prompt"
             placeholder="Ketik prompt di sini..."
@@ -431,13 +322,176 @@
               this.style.height = '';
               this.style.height = this.scrollHeight + 'px';
             "
+            style="flex: 1; height: 46px"
           ></textarea>
-          <button type="submit" class="send-btn" title="Analisis Prompt">
+
+          <button
+            type="submit"
+            class="send-btn"
+            title="Analisis Prompt"
+            style="height: 46px"
+          >
             <i class="fas fa-paper-plane"></i>
           </button>
         </form>
-        <div class="footer-note">Sistem memproses deteksi intensi semantik</div>
       </footer>
     </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const chatContainer = document.querySelector(".chat-container");
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        Chart.register(ChartDataLabels);
+
+        const canvasContainers = document.querySelectorAll(
+          ".message-content:has(.lime-canvas-dynamic)",
+        );
+        const highlightContainers =
+          document.querySelectorAll(".lime-wrapper-item");
+
+        canvasContainers.forEach((wrapper) => {
+          const canvasEl = wrapper.querySelector(".lime-canvas-dynamic");
+          const innerContainer = wrapper.querySelector(
+            ".chart-inner-container",
+          );
+          const jsonContainer = wrapper.querySelector(".lime-json-data");
+
+          if (jsonContainer && canvasEl && innerContainer) {
+            try {
+              const limeData = JSON.parse(jsonContainer.textContent);
+              if (limeData && limeData.weights && limeData.weights.length > 0) {
+                const ctx = canvasEl.getContext("2d");
+                const weights = limeData.weights;
+                const labels = weights.map((i) => i[0]);
+                const realValues = weights.map((i) => i[1]);
+
+                const minRequiredWidth = labels.length * 75;
+                innerContainer.style.width = minRequiredWidth + "px";
+
+                const dataValues = weights.map((item) => {
+                  let val = item[1];
+                  return Math.abs(val) < 0.001 ? -0.05 : val;
+                });
+
+                const bgColors = dataValues.map((v) =>
+                  v > 0.001
+                    ? "rgba(239, 68, 68, 0.6)"
+                    : "rgba(59, 130, 246, 0.6)",
+                );
+                const borderColors = dataValues.map((v) =>
+                  v > 0.001 ? "rgb(239, 68, 68)" : "rgb(59, 130, 246)",
+                );
+
+                new Chart(ctx, {
+                  type: "bar",
+                  data: {
+                    labels: labels,
+                    datasets: [
+                      {
+                        data: dataValues,
+                        backgroundColor: bgColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        maxBarThickness: 40,
+                      },
+                    ],
+                  },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25, bottom: 25 } },
+                    scales: {
+                      y: {
+                        min: -1,
+                        max: 1,
+                        ticks: {
+                          callback: function (v) {
+                            return v.toFixed(1);
+                          },
+                        },
+                        grid: {
+                          color: (c) =>
+                            c.tick.value === 0
+                              ? "rgba(0,0,0,0.3)"
+                              : "rgba(0,0,0,0.05)",
+                          lineWidth: (c) => (c.tick.value === 0 ? 2 : 1),
+                        },
+                      },
+                    },
+                    plugins: {
+                      legend: { display: false },
+                      datalabels: {
+                        color: "#334155",
+                        anchor: "end",
+                        align: function (context) {
+                          return dataValues[context.dataIndex] >= 0
+                            ? "top"
+                            : "bottom";
+                        },
+                        formatter: function (value, context) {
+                          let orig = realValues[context.dataIndex];
+                          return orig > 0.001
+                            ? "+" + orig.toFixed(4)
+                            : orig.toFixed(4);
+                        },
+                        font: { weight: "bold", size: 11 },
+                      },
+                    },
+                  },
+                });
+              }
+            } catch (e) {}
+          }
+        });
+
+        highlightContainers.forEach((wrapper) => {
+          const textDiv = wrapper.querySelector(".dynamic-highlight-text");
+          let nextSibling = wrapper.nextElementSibling;
+          while (nextSibling && !nextSibling.classList.contains("message")) {
+            nextSibling = nextSibling.nextElementSibling;
+          }
+          const jsonContainer = nextSibling
+            ? nextSibling.querySelector(".lime-json-data")
+            : null;
+
+          if (jsonContainer && textDiv) {
+            try {
+              const limeData = JSON.parse(jsonContainer.textContent);
+              if (limeData && limeData.weights) {
+                const weights = limeData.weights;
+                const textArray = limeData.text;
+                const weightMap = {};
+                weights.forEach((i) => {
+                  weightMap[i[0].toLowerCase()] = i[1];
+                });
+
+                let htmlText = "";
+                textArray.forEach((word) => {
+                  const cleanWord = word
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, "");
+                  const weight = weightMap[cleanWord];
+
+                  if (weight !== undefined) {
+                    const intensity = Math.min(Math.abs(weight) * 2, 1);
+                    let bgColor =
+                      weight > 0
+                        ? `rgba(239, 68, 68, ${intensity})`
+                        : `rgba(59, 130, 246, ${intensity})`;
+                    let textColor = intensity > 0.5 ? "#fff" : "#000";
+                    htmlText += `<span class="word-pill" style="background-color: ${bgColor}; color: ${textColor};" title="Bobot: ${weight.toFixed(4)}">${word}</span> `;
+                  } else {
+                    htmlText += `<span>${word}</span> `;
+                  }
+                });
+                textDiv.innerHTML = htmlText;
+              }
+            } catch (e) {}
+          }
+        });
+      });
+    </script>
   </body>
 </html>

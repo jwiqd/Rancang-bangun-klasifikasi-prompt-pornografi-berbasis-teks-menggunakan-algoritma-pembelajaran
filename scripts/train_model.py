@@ -10,7 +10,7 @@ import json
 # Setup Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Pastikan menggunakan dataset yang sudah kita bersihkan sebelumnya
-DATASET_PATH = os.path.join(BASE_DIR, 'dataset', 'dataset_tambahan_fixed_cleaned.csv')
+DATASET_PATH = os.path.join(BASE_DIR, 'dataset', 'dataset_final.csv')
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
 # 1. Load Dataset
@@ -18,13 +18,10 @@ print("Memuat dataset...")
 df = pd.read_csv(DATASET_PATH)
 
 # Pisahkan fitur teks dan label
-X = df['text'].astype(str)
+X = df['teks'].astype(str)
 y = df['label']
 
 # # Ubah label teks menjadi angka: 1 untuk negatif (Blokir), 0 untuk positif (Aman)
-# y = y.map({'negatif': 1, 'positif': 0})
-# --- KODE YANG DIPERBAIKI ---
-# Gunakan replace agar data yang sudah berupa angka 0/1 tidak diubah menjadi NaN
 y = y.replace({'negatif': 1, 'positif': 0, '1': 1, '0': 0})
 
 # Paksa semua label menjadi angka bulat (integer) agar aman dibaca oleh SVM
@@ -36,7 +33,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 # 3. Ekstraksi Fitur (TF-IDF)
 print("Melakukan ekstraksi fitur TF-IDF...")
-vectorizer = TfidfVectorizer(ngram_range=(1, 2))
+vectorizer = TfidfVectorizer(ngram_range=(1, 3))
 X_train_vec = vectorizer.fit_transform(X_train)
 X_test_vec = vectorizer.transform(X_test)
 
@@ -57,9 +54,7 @@ print("\nAkurasi:", accuracy_score(y_test, y_pred))
 report_dict = classification_report(y_test, y_pred, output_dict=True)
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
 
-# ==========================================
 # 6. SIMPAN METRIK KE JSON UNTUK WEBSITE
-# ==========================================
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
 
