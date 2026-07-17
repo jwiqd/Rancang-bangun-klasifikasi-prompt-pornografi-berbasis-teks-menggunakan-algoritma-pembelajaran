@@ -71,11 +71,11 @@ def index():
         if prob_aman >= 0.70:
             result_msg = "PROMPT AMAN"
             status_class = "safe"
-            threshold_msg = f"✅ Lolos Threshold: Skor Aman ({round(prob_aman*100, 1)}%) memenuhi standar minimal 70%."
+            threshold_msg = f"✅ Prompt aman tidak mengandung unsur pornografi "
         else:
-            result_msg = "KONTEN DIBLOKIR: Gagal melewati batas aman 70% atau terdeteksi vulgar"
+            result_msg = "KONTEN DIBLOKIR"
             status_class = "blocked"
-            threshold_msg = f"❌ Gagal Threshold: Skor Aman ({round(prob_aman*100, 1)}%) di bawah standar minimal 70%."
+            threshold_msg = f"❌ Prompt Diblokir"
 
         # Ekstraksi LIME (Harus menggunakan model yang aktif)
         def predict_proba_active(texts):

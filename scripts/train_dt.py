@@ -6,6 +6,10 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import joblib
 import os
 
+# IMPORT TAMBAHAN UNTUK VISUALISASI GRAFIK
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 # Setup Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATASET_PATH = os.path.join(BASE_DIR, 'dataset', 'dataset_final.csv')
@@ -21,8 +25,8 @@ y = df['label']
 # Pastikan semua label menjadi angka bulat
 y = pd.to_numeric(y, errors='coerce').fillna(0).astype(int)
 
-# 2. Split Data (80% Training, 20% Testing)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# 2. Split Data (70% Training, 30% Testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # 3. Ekstraksi Fitur (TF-IDF)
 print("Melakukan ekstraksi fitur TF-IDF...")
@@ -33,13 +37,14 @@ X_test_vec = vectorizer_dt.transform(X_test)
 # 4. Pelatihan Model DECISION TREE
 print("Melatih model Decision Tree...")
 # Kita atur kedalaman maksimal (max_depth) agar tidak overfitting
-dt_model = DecisionTreeClassifier(class_weight='balanced', max_depth=50, random_state=42)
+dt_model = DecisionTreeClassifier(max_depth=50, random_state=42)
 dt_model.fit(X_train_vec, y_train)
 
 # 5. Evaluasi Model
 y_pred = dt_model.predict(X_test_vec)
 print("\n=== HASIL EVALUASI DECISION TREE ===")
-print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+cm_dt = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:\n", cm_dt)
 print("\nAkurasi:", accuracy_score(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
 
@@ -50,3 +55,14 @@ if not os.path.exists(MODELS_DIR):
 joblib.dump(dt_model, os.path.join(MODELS_DIR, 'dt_model.pkl'))
 joblib.dump(vectorizer_dt, os.path.join(MODELS_DIR, 'tfidf_vectorizer_dt.pkl'))
 print(f"\nModel Decision Tree berhasil disimpan!")
+
+# ==========================================
+# 7. MENAMPILKAN VISUALISASI CONFUSION MATRIX
+# ==========================================
+print("\nMenampilkan grafik Confusion Matrix Decision Tree... (Tutup grafik untuk selesai)")
+plt.figure(figsize=(6, 4))
+sns.heatmap(cm_dt, annot=True, fmt='d', cmap='Reds') # Memakai warna merah agar beda dari SVM
+plt.title('Confusion Matrix - Decision Tree')
+plt.ylabel('Label Asli (Aktual)')
+plt.xlabel('Tebakan Model (Prediksi)')
+plt.show()
