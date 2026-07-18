@@ -20,8 +20,8 @@ try:
     vectorizer_svm = joblib.load(os.path.join(MODELS_DIR, 'tfidf_vectorizer.pkl'))
     
     # 2. Model Decision Tree (DT)
-    dt_model = joblib.load(os.path.join(MODELS_DIR, 'dt_model.pkl'))
-    vectorizer_dt = joblib.load(os.path.join(MODELS_DIR, 'tfidf_vectorizer_dt.pkl'))
+    # dt_model = joblib.load(os.path.join(MODELS_DIR, 'dt_model.pkl'))
+    # vectorizer_dt = joblib.load(os.path.join(MODELS_DIR, 'tfidf_vectorizer_dt.pkl'))
     
     class_names = ['Aman', 'Blokir']
     lime_explainer = LimeTextExplainer(class_names=class_names)
@@ -42,15 +42,17 @@ def index():
             return render_template('index.html', chat_history=session.get('chat_history', []))
 
         #untuk memilih model yang aktif berdasarkan input pengguna
-        if model_choice == 'dt':
-            active_model = dt_model
-            active_vectorizer = vectorizer_dt
-            model_name_display = "Decision Tree"
-        else:
-            active_model = svm_model
-            active_vectorizer = vectorizer_svm
-            model_name_display = "SVM"
-        
+        # if model_choice == 'dt':
+        #     active_model = dt_model
+        #     active_vectorizer = vectorizer_dt
+        #     model_name_display = "Decision Tree"
+        # else:
+        #     active_model = svm_model
+        #     active_vectorizer = vectorizer_svm
+        #     model_name_display = "SVM"
+        active_model = svm_model
+        active_vectorizer = vectorizer_svm
+        model_name_display = "SVM"
 
         try:
             translator = GoogleTranslator(source='auto', target='id')
@@ -85,13 +87,14 @@ def index():
         lime_data_custom = None
         if cleaned_prompt.strip():
             try:
+                # Ekstraksi LIME untuk mendapatkan bobot per kata
                 explanation = lime_explainer.explain_instance(
                     cleaned_prompt, 
                     predict_proba_active, 
                     num_features=10, 
                     labels=(1,) 
                 )
-                
+                # Menyimpan hasil probabilitas dan bobot kata untuk dikirim ke UI
                 lime_data_custom = {
                     "prob_aman": round(prob_aman * 100, 1),
                     "prob_blokir": round(prob_blokir * 100, 1),
