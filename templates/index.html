@@ -274,6 +274,12 @@
           </div>
         </div>
         {% endif %} {% endfor %}
+        {% if error %}
+        <div style="background-color: #fee2e2; color: #991b1b; padding: 15px; margin-top: 15px; border: 1px solid #fecaca; border-radius: 8px; text-align: center; font-size: 0.95em;">
+          <i class="fas fa-exclamation-triangle" style="margin-right: 5px;"></i>
+          <strong>{{ error }}</strong>
+        </div>
+        {% endif %}
       </main>
 
       <footer class="input-area">

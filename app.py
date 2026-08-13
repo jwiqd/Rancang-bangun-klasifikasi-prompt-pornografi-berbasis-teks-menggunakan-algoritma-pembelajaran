@@ -58,8 +58,9 @@ def index():
             translator = GoogleTranslator(source='auto', target='id')
             translated_prompt = translator.translate(raw_prompt)
         except Exception:
-            translated_prompt = raw_prompt 
-            
+            #translated_prompt = raw_prompt 
+            error_msg = "Sistem gagal memproses: Koneksi internet terputus.periksa koneksi Anda."
+            return render_template('index.html', chat_history=session.get('chat_history', []), error=error_msg)
         cleaned_prompt = clean_text(translated_prompt)
         
         # Gunakan Vectorizer dan Model yang sedang aktif

@@ -27,8 +27,24 @@ def clean_text(text):
     # ==========================================
     # Jaring 1: Menangkap kombinasi kata "tanpa baju", "tidak pakai busana", "buka pakaian", dll
     # \b = batas kata, \s+ = spasi satu atau lebih
+    #tamabahkan  
     pola_tanpa_baju = r'\b(tanpa|tidak pakai|gak pakai|nggak pakai|buka|lepas)\s+(baju|pakaian|busana|celana|baju dalam|pakaian dalam)\b'
     text = re.sub(pola_tanpa_baju, 'telanjang', text)
+    # ==========================================
+    # TAMBAHAN REVISI SIDANG DARI DOSEN PENGUJI 2
+    # ==========================================
+    # Jaring 2: Menyelamatkan frasa kiasan sains/aman agar tidak diblokir oleh TF-IDF
+    # Jaring 2: Menyelamatkan frasa kiasan sains/aman agar tidak diblokir oleh TF-IDF
+    text = re.sub(r'\bmata telanjang\b', 'penglihatan langsung', text)
+    
+    # Menyelamatkan konteks edukasi/sehari-hari untuk kata "keluar"
+    # UBAH BAGIAN INI: Ganti "meninggalkan" menjadi "pergi dari" atau "izin dari"
+    text = re.sub(r'\bkeluar kelas\b', 'pergi dari kelas', text)
+    text = re.sub(r'\bkeluar rumah\b', 'pergi dari rumah', text)
+    # Jaring 3: Normalisasi bahasa gaul sebelum masuk ke Sastrawi
+    # Mencegah Sastrawi memotong "kepengen" menjadi "ken"
+    text = re.sub(r'\bkepengen\b', 'ingin', text)
+    text = re.sub(r'\bpengen\b', 'ingin', text)
 
     # Jaring 2: Menangkap eufemisme hubungan seksual
     pola_seks = r'\b(berhubungan badan|berhubungan intim|main serong|tidur bareng)\b'

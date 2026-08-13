@@ -33,7 +33,7 @@ y = pd.to_numeric(y, errors='coerce').fillna(0).astype(int)
 # ----------------------------
 
 # 2. Split Data (70% Training, 30% Testing)
-# test size = 0.3 dirubah sesuai arahan dosen
+# test size  dirubah ke 0.3 sesuai arahan dosen pembimbing
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # 3. Ekstraksi Fitur (TF-IDF)
