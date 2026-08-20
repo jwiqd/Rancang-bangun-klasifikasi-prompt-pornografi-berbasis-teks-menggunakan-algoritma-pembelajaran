@@ -7,4 +7,35 @@ __pycache__/
 *.pyc
 
 # (Opsional) Jika file model Anda ukurannya di atas 100MB, hilangkan tanda pagar di bawah ini
-# models/*.pkl
+models/dt_model.pkl
+models/tfidf_vectorizer_dt.pkl
+Mengabaikan Virtual Environment (Sangat Wajib!)
+venv/
+__pycache__/
+
+# Mengabaikan dataset mentah/eksperimen (simpan yang final saja)
+dataset/dataset_tambahan_1.csv
+dataset/dataset_tambahan_fixed.csv
+dataset/dataset_tambahan_fixed_cleaned.csv
+dataset/dataset500.csv
+
+# Mengabaikan catatan pribadi
+hasil bimbingan online.txt
+kuci.txt
+datayaml.txt
+requirements.txt
+akurasi.txt
+
+# (Opsional) Jika gambar visualisasi tidak ingin di-push, hapus tanda pagarnya
+cm_logistic_regression.png
+cm_naive_bayes.png
+visualisasi confusion matrix dt.png
+visualisasi_logistic regresion.png
+visualisasi_naive bayes.png
+
+#mengabaikan file log
+scripts/merge_dataset.py
+scripts/plot_cm.py
+scripts/train_comparison.py
+scripts/train_dt.py
+
