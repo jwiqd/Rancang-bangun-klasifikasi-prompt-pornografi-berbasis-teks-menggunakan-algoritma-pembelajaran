@@ -1,3 +1,0 @@
-train: /content/drive/MyDrive/Project_PCD/sign_language_detection/bahasa_isyarat/train
-val: /content/drive/MyDrive/Project_PCD/sign_language_detection/bahasa_isyarat/valid
-test: /content/drive/MyDrive/Project_PCD/sign_language_detection/bahasa_isyarat/test
